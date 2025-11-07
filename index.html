@@ -9,13 +9,16 @@
     body { font-family:'Inter',system-ui,sans-serif; background:#f8f9fa; margin:0; color:#1a1a1a; }
     header { background:#000; color:#ffd700; padding:32px 20px; text-align:center; }
     header h1 { margin:0; font-size:28px; }
-    header p { margin-top:8px; font-size:16px; opacity:0.9; }
+    /* --- ADJUSTED: Header paragraph color to white --- */
+    header p { margin-top:8px; font-size:16px; opacity:1; color: #fff; } 
     .container { max-width:1200px; margin:auto; padding:20px; }
     .search-container { text-align:center; margin-bottom:20px; }
     .search-input { padding:12px; width:100%; max-width:400px; border:1px solid #ccc; border-radius:8px; }
     .remnant-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:24px; }
     .card { background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.08); overflow:hidden; text-align:center; transition:transform 0.2s; }
     .card:hover { transform:translateY(-4px); }
+    /* --- Added image link style to remove underline --- */
+    .card a.image-link { text-decoration: none; }
     .card img { width:100%; height:180px; object-fit:cover; }
     .info { padding:12px; font-size:14px; }
     .info b { font-size:16px; display:block; margin-bottom:4px; }
@@ -30,8 +33,7 @@
 
 <header>
   <h1>Prime Countertops</h1>
-  <p>Remnant Live Inventory</p>
-</header>
+  <p>Remnant Live Inventory</p> </header>
 
 <div class="container">
   <div class="search-container">
@@ -61,9 +63,6 @@ fetch(csvUrl)
       // Ensure row has enough columns (at least up to J)
       if (row.length < 10) return;
 
-      // -------------------------------------------------------------
-      // ⚠️ UPDATED COLUMN MAPPING TO MATCH YOUR NEW SEQUENCE (A-J)
-      // -------------------------------------------------------------
       const [
         id,          // Column A (Index 0)
         material,    // Column B (Index 1)
@@ -72,29 +71,22 @@ fetch(csvUrl)
         length,      // Column E (Index 4)
         width,       // Column F (Index 5)
         area,        // Column G (Index 6)
-        status,      // Column H (Index 7) <-- Now checking status here
+        status,      // Column H (Index 7)
         driveLink,   // Column I (Index 8)
-        imageFile    // Column J (Index 9) <-- Now reading file name here
+        imageFile    // Column J (Index 9)
       ] = row.map(x => x.trim());
 
-      // -------------------------------------------------------------
-      // Check Status (Column H)
-      // -------------------------------------------------------------
       if (status.toLowerCase() !== 'available') return;
 
-      // -------------------------------------------------------------
-      // ⚠️ UPDATED IMAGE PATH LOGIC
-      // The file name in Column J is assumed to be the *full* file path
-      // that includes the "remnant.color/id.jep" pattern.
-      // Example: 'remnant.blue/456.jep'
-      // -------------------------------------------------------------
       const imageSrc = imageFile 
-        ? baseURL + imageFile // Assumes imageFile contains the full path/filename
+        ? baseURL + imageFile
         : 'https://placehold.co/300x180?text=No+Photo';
 
       const card = `
         <div class="card">
-          <img src="${imageSrc}" onerror="this.src='https://placehold.co/300x180?text=No+Photo';this.onerror=null;">
+          <a href="${imageSrc}" target="_blank" class="image-link">
+            <img src="${imageSrc}" onerror="this.src='https://placehold.co/300x180?text=No+Photo';this.onerror=null;">
+          </a>
           <div class="info">
             <b>${color}</b>
             <div><strong>ID:</strong> ${id}</div>
