@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prime Countertops — Remnant Live Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { font-family:'Inter',sans-serif; background:#fff; margin:0; padding:0; color:#222; }
+  header { text-align:center; padding:40px 20px; border-bottom:2px solid #d4af37; }
+  header h1 { font-size:2.2em; margin:0; }
+  .remnant-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:28px; padding:40px; }
+  .card { border:1px solid #ddd; border-radius:16px; overflow:hidden; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.1); transition:0.3s; }
+  .card:hover { transform:translateY(-6px); box-shadow:0 4px 18px rgba(0,0,0,0.15); border-color:#d4af37; }
+  .card img { width:100%; height:180px; object-fit:cover; display:block; background:#f8f8f8; }
+  .card-content { padding:16px; }
+  .card-content h3 { font-size:1.2em; color:#333; margin:0 0 8px; }
+  .card-content p { font-size:0.9em; color:#666; margin:4px 0; }
+  .card-content a { display:block; text-align:center; margin-top:12px; padding:10px; background:#000; color:#ffd700; border-radius:8px; text-decoration:none; font-weight:600; transition:0.2s; }
+  .card-content a:hover { background:#333; }
+  .empty { grid-column:1/-1; text-align:center; color:#666; font-size:18px; padding:60px; }
+  footer { text-align:center; background:#000; color:#d4af37; padding:26px 12px; font-size:15px; }
+  footer a { color:#d4af37; text-decoration:none; }
+  footer a:hover { text-decoration:underline; }
+  @media(max-width:768px){ header h1{ font-size:1.8em; } .remnant-grid{ padding:24px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Remnant Live Inventory</h1>
+</header>
+
+<main class="remnant-grid" id="remnantGrid">
+  <div class="empty">Loading inventory...</div>
+</main>
+
+<footer>
+  © 2025 Prime Countertops — <a href="mailto:sales@primecountertops.net">sales@primecountertops.net</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+const proxyBase = "https://script.google.com/macros/s/AKfycbwM8cy9LOU0qvvKXvHzJPt99nn9__cuZ_TSmFQ6uW0Z2y7eG0pwjBClHWJ6jKRZaxVN/exec"; 
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4PyEg3JWk2spDwAJhcD6e5qPxWf9HV4Vb9-sZs7M1_hBVgDKA8PIF4Z42wjR1LGYpxgjCDAQy1JE1/pub?gid=1308909698&output=csv";
+
+function getImageUrl(driveUrl) {
+  if (!driveUrl) return "https://via.placeholder.com/300x180?text=No+Image";
+  const match = driveUrl.match(/[-\w]{25,}/);
+  return match ? `${proxyBase}?id=${match[0]}` : "https://via.placeholder.com/300x180?text=No+Image";
+}
+
+function loadInventory() {
+  const grid = document.getElementById("remnantGrid");
+  grid.innerHTML = "<div class='empty'>Loading...</div>";
+
+  Papa.parse(csvUrl, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      const data = results.data;
+      const remnants = data.filter(r => r.Status && r.Status.trim().toLowerCase() === "available");
+
+      if (!remnants.length) {
+        grid.innerHTML = "<div class='empty'>No remnants available.</div>";
+        return;
+      }
+
+      grid.innerHTML = remnants.map(r => `
+        <div class="card">
+          <img src="${getImageUrl(r['Google link'])}" alt="${r.Color}">
+          <div class="card-content">
+            <h3>${r.Color}</h3>
+            <p><strong>ID:</strong> ${r.ID}</p>
+            <p><strong>Material:</strong> ${r.Material}</p>
+            <p><strong>Size:</strong> ${r.Lenght} × ${r.Width}"</p>
+            <a href="mailto:sales@primecountertops.net?subject=Reserve%20${r.ID}&body=Hi,%0A%0AI%27m%20interested%20in%20this remnant:%0A%0AID:%20${r.ID}%0AColor:%20${r.Color}%0AMaterial:%20${r.Material}%0ABrand:%20${r.Brand}%0ASize:%20${r.Lenght}%20×%20${r.Width}%22%0A%0ACould%20you%20please%20provide%20more%20info?%0A%0AThank%20you!">Reserve Now</a>
+          </div>
+        </div>
+      `).join("");
+    },
+    error: function(err) {
+      grid.innerHTML = `<div class='empty'>Error loading inventory: ${err}</div>`;
+    }
+  });
+}
+
+loadInventory();
+</script>
+
+</body>
+</html>
