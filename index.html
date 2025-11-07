@@ -5,10 +5,18 @@ let allCards = [];
 
 function extractDriveId(url) {
   if (!url) return null;
-  // Handles share, open?id=, file/d/, uc?id= and other variants
-  let match = url.match(/(?:id=|\/d\/|open\?id=|uc\?id=)([-\w]{25,})/);
-  if (!match) match = url.match(/[-\w]{25,}/);
-  return match ? match[1] || match[0] : null;
+  url = url.trim();
+
+  // handle ?id= links (like your case)
+  let match = url.match(/id=([\w-]{25,})/);
+  if (match) return match[1];
+
+  // fallback for /d/.../view and uc?id= links
+  match = url.match(/[-\w]{25,}/);
+  if (match) return match[0];
+
+  console.warn("No Drive ID found for:", url);
+  return null;
 }
 
 fetch(csvUrl)
@@ -22,7 +30,7 @@ fetch(csvUrl)
     rows.slice(1).forEach(row => {
       const r = {};
       header.forEach((h, i) => r[h] = (row[i] || "").trim());
-      if (r.status.toLowerCase() !== "available") return;
+      if (!r.status || r.status.toLowerCase() !== "available") return;
 
       const id = r["id"];
       const color = r["color"];
@@ -30,11 +38,14 @@ fetch(csvUrl)
       const length = r["lenght"];
       const width = r["width"];
       const area = r["usable area (sq/ft)"];
-      const driveId = extractDriveId(r["google link"]);
+      const link = r["google link"];
 
+      const driveId = extractDriveId(link);
       const imgUrl = driveId
         ? `${proxyBase}?id=${driveId}`
-        : "https://placehold.co/300x180?text=No+Image";
+        : "https://placehold.co/300x180?text=No+Photo";
+
+      console.log("Image URL:", imgUrl);
 
       const card = `
         <div class="card" onclick="openLightbox('${imgUrl}')">
