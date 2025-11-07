@@ -47,60 +47,66 @@
 </div>
 
 <script>
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4PyEg3JWk2spDwAJhcD6e5qPxWf9HV4Vb9-sZs7M1_hBVgDKA8PIF4Z42wjR1LGYpxgjCDAQy1JE1/pub?gid=1308909698&output=csv";
+// Live CSV from Google Sheet
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRnGELVHvjmo6XT1JI2wlruG_kkliJ6942oyAtkFbJYYAZagAh6Cw3-sxDMqfVj-7LaYiDTOQhExE7u/pub?gid=0&single=true&output=csv";
+const baseURL = "https://primect.github.io/TESTLive_Image/"; // GitHub Pages base
 let allCards = [];
 
 fetch(csvUrl)
-  .then(r => r.text())
+  .then(res => res.text())
   .then(csv => {
     const rows = csv.split(/\r?\n/).map(r => r.split(','));
-    let out = '';
+    let html = '';
     rows.slice(1).forEach(row => {
-      if (row.length < 9) return;
-      const id = row[0].trim();
-      const material = row[1].trim();
-      const color = row[2].trim();
-      const length = row[4].trim();
-      const width = row[5].trim();
-      const area = row[6].trim();
-      const status = row[8].trim().toLowerCase();
-      if (status !== "available") return;
+      if (row.length < 10) return;
 
-      // Build local image path (replace spaces with underscores)
-      const safeColor = color.replace(/\s+/g, "_");
-      const photoUrl = `remnants-images/${safeColor}/${id}.jpg`;
+      const [
+        id,         // a - ID
+        material,   // b - Material
+        color,      // c - Color
+        brand,      // d - Brand
+        length,     // e - Length
+        width,      // f - Width
+        area,       // g - Usable area
+        driveLink,  // h - Drive link (ignored for now)
+        status,     // i - Status
+        imageFile   // k - Image file name
+      ] = row.map(x => x.trim());
+
+      if (status.toLowerCase() !== 'available') return;
+
+      const imageSrc = imageFile ? baseURL + 'remnants-images/' + imageFile : 'https://placehold.co/300x180?text=No+Photo';
 
       const card = `
         <div class="card">
-          <img src="${photoUrl}" onerror="this.src='https://placehold.co/300x180?text=No+Photo';this.onerror=null;">
+          <img src="${imageSrc}" onerror="this.src='https://placehold.co/300x180?text=No+Photo';this.onerror=null;">
           <div class="info">
             <b>${color}</b>
             <div><strong>ID:</strong> ${id}</div>
             <div><strong>Material:</strong> ${material}</div>
-            <div><strong>Length:</strong> ${length}" × <strong>Width:</strong> ${width}"</div>
-            <div><strong>Usable Area:</strong> ${area} sq.ft</div>
+            <div><strong>Size:</strong> ${length}" × ${width}"</div>
           </div>
-          <a href="mailto:sales@primecountertops.net?subject=Reserve%20${id}&body=Hi,%0A%0AI%27m%20interested%20in%20this%20remnant:%0A%0AID:%20${id}%0AMaterial:%20${material}%0AColor:%20${color}%0ASize:%20${length}%22%20x%20${width}%22%0A%0AThank%20you!">Reserve Now</a>
+          <a href="mailto:sales@primecountertops.net?subject=Reserve%20${id}&body=Hi,%0A%0AI’m%20interested%20in%20this%20remnant:%0A%0AID:%20${id}%0AMaterial:%20${material}%0AColor:%20${color}%0ASize:%20${length}%22%20x%20${width}%22%0A%0AThank%20you!">Reserve Now</a>
         </div>
       `;
-
-      out += card;
-      allCards.push({html:card, search:`${id} ${material} ${color} ${length} ${width} ${area}`.toLowerCase()});
+      html += card;
+      allCards.push({ html: card, search: `${id} ${color} ${material} ${length} ${width}`.toLowerCase() });
     });
-    document.getElementById('grid').innerHTML = out || '<p class="empty">No remnants available.</p>';
+
+    document.getElementById('grid').innerHTML = html || '<p class="empty">No remnants available.</p>';
   })
-  .catch(e=>{
-    console.error(e);
+  .catch(err => {
+    console.error(err);
     document.getElementById('grid').innerHTML = '<p class="empty" style="color:red;">Error loading inventory.</p>';
   });
 
-function filterCards(){
-  const q=document.getElementById('search').value.toLowerCase();
-  const grid=document.getElementById('grid');
-  let filtered='';
-  allCards.forEach(c=>{ if(c.search.includes(q)) filtered+=c.html });
-  grid.innerHTML=filtered||'<p class="empty">No results found.</p>';
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const grid = document.getElementById('grid');
+  const filtered = allCards.filter(c => c.search.includes(query)).map(c => c.html).join('');
+  grid.innerHTML = filtered || '<p class="empty">No results found.</p>';
 }
 </script>
+
 </body>
 </html>
