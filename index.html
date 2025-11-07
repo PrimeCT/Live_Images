@@ -58,24 +58,39 @@ fetch(csvUrl)
     const rows = csv.split(/\r?\n/).map(r => r.split(','));
     let html = '';
     rows.slice(1).forEach(row => {
+      // Ensure row has enough columns (at least up to J)
       if (row.length < 10) return;
 
+      // -------------------------------------------------------------
+      // ⚠️ UPDATED COLUMN MAPPING TO MATCH YOUR NEW SEQUENCE (A-J)
+      // -------------------------------------------------------------
       const [
-        id,         // a - ID
-        material,   // b - Material
-        color,      // c - Color
-        brand,      // d - Brand
-        length,     // e - Length
-        width,      // f - Width
-        area,       // g - Usable area
-        driveLink,  // h - Drive link (ignored for now)
-        status,     // i - Status
-        imageFile   // k - Image file name
+        id,          // Column A (Index 0)
+        material,    // Column B (Index 1)
+        color,       // Column C (Index 2)
+        brand,       // Column D (Index 3)
+        length,      // Column E (Index 4)
+        width,       // Column F (Index 5)
+        area,        // Column G (Index 6)
+        status,      // Column H (Index 7) <-- Now checking status here
+        driveLink,   // Column I (Index 8)
+        imageFile    // Column J (Index 9) <-- Now reading file name here
       ] = row.map(x => x.trim());
 
+      // -------------------------------------------------------------
+      // Check Status (Column H)
+      // -------------------------------------------------------------
       if (status.toLowerCase() !== 'available') return;
 
-      const imageSrc = imageFile ? baseURL + 'remnants-images/' + imageFile : 'https://placehold.co/300x180?text=No+Photo';
+      // -------------------------------------------------------------
+      // ⚠️ UPDATED IMAGE PATH LOGIC
+      // The file name in Column J is assumed to be the *full* file path
+      // that includes the "remnant.color/id.jep" pattern.
+      // Example: 'remnant.blue/456.jep'
+      // -------------------------------------------------------------
+      const imageSrc = imageFile 
+        ? baseURL + imageFile // Assumes imageFile contains the full path/filename
+        : 'https://placehold.co/300x180?text=No+Photo';
 
       const card = `
         <div class="card">
