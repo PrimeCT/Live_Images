@@ -3,31 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Remnant Live Inventory</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <title>Prime Countertops - Remnant Live Inventory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family:'Inter',sans-serif; background:#f8f9fa; color:#1a1a1a; margin:0; }
-    header { background:#000; color:#ffd700; text-align:center; padding:32px 20px; }
-    header h1 { margin:0; font-size:28px; font-weight:600; }
-    header p { margin-top:8px; opacity:0.8; }
-    .container { max-width:1200px; margin:0 auto; padding:20px; }
-    .search-container { text-align:center; margin-bottom:20px; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',system-ui,sans-serif; background:#f8f9fa; color:#1a1a1a; line-height:1.5; }
+
+    header { background:#000; color:#ffd700; padding:32px 20px; text-align:center; }
+    header h1 { font-size:28px; font-weight:600; }
+    header p { font-size:16px; opacity:0.9; margin-top:8px; }
+
+    .container { max-width:1200px; margin:0 auto; padding:24px; }
+    .search-container { text-align:center; margin-bottom:24px; }
     .search-input {
-      padding:10px 16px; border:1px solid #ccc; border-radius:8px;
-      width:80%; max-width:400px; font-size:16px;
+      width:100%; max-width:400px; padding:10px 14px; border:1px solid #ccc;
+      border-radius:8px; font-size:16px; outline:none; transition:all .2s;
     }
+    .search-input:focus { border-color:#ffd700; box-shadow:0 0 0 2px rgba(255,215,0,0.3); }
+
     .remnant-grid {
-      display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap:24px;
     }
+
     .card {
-      border:1px solid #e0e0e0; border-radius:16px; background:#fff;
-      box-shadow:0 4px 12px rgba(0,0,0,0.08); overflow:hidden;
-      text-align:center; transition:transform 0.2s;
+      border:1px solid #e0e0e0; border-radius:16px;
+      background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.08);
+      overflow:hidden; text-align:center; transition:transform .2s;
+      cursor:pointer;
     }
     .card:hover { transform:translateY(-4px); }
-    .card img { width:100%; height:180px; object-fit:cover; background:#eee; }
+    .card img { width:100%; height:200px; object-fit:cover; }
     .card .info { padding:12px; font-size:14px; }
     .card .info b { font-size:16px; display:block; margin-bottom:4px; }
     .card a {
@@ -35,133 +42,161 @@
       background:#000; color:#ffd700; border-radius:8px;
       text-decoration:none; font-weight:600;
     }
-    .empty { grid-column:1/-1; text-align:center; padding:40px; color:#666; }
-    footer { text-align:center; padding:24px; background:#000; color:#ffd700; font-size:14px; }
+    .card a:hover { background:#333; }
+
+    .empty { grid-column:1/-1; text-align:center; color:#666; font-size:18px; padding:40px; }
+
+    .footer {
+      text-align:center; padding:24px;
+      background:#000; color:#ffd700; font-size:14px;
+    }
+    .footer a { color:#ffd700; text-decoration:underline; }
+    .footer a:hover { text-decoration:none; }
+
+    /* Lightbox */
     .lightbox {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9);
-      justify-content:center; align-items:center; z-index:1000;
+      display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.9); justify-content:center; align-items:center;
+      z-index:1000; padding:20px;
+    }
+    .lightbox img {
+      max-width:90%; max-height:90vh; border-radius:12px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.5);
     }
     .lightbox.active { display:flex; }
-    .lightbox img { max-width:90%; max-height:90vh; border-radius:12px; }
+
+    @media (max-width:768px) {
+      .remnant-grid { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>Remnant Live Inventory</h1>
-  <p>Updated automatically from live sheet</p>
+  <h1>Prime Countertops</h1>
+  <p>Remnant Live Inventory</p>
 </header>
 
 <div class="container">
   <div class="search-container">
-    <input type="text" id="search" class="search-input" placeholder="Search by ID, color, or material..." onkeyup="filterCards()">
+    <input type="text" class="search-input" id="search" placeholder="Search by ID, color, or material..." onkeyup="filterCards()">
   </div>
-  <div id="grid" class="remnant-grid">
+  <div class="remnant-grid" id="grid">
     <p class="empty">Loading inventory...</p>
   </div>
 </div>
 
-<footer>
-  <p>Contact us at <a href="mailto:sales@primecountertops.net" style="color:#ffd700;">sales@primecountertops.net</a></p>
-</footer>
+<div class="footer">
+  Questions? Email <a href="mailto:sales@primecountertops.net">sales@primecountertops.net</a>
+  or call (240) 887-0036
+</div>
 
-<div id="lightbox" class="lightbox" onclick="closeLightbox()">
-  <img id="lightbox-img" src="" alt="">
+<div class="lightbox" id="lightbox">
+  <img id="lightbox-img" src="" alt="Enlarged view">
 </div>
 
 <script>
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4PyEg3JWk2spDwAJhcD6e5qPxWf9HV4Vb9-sZs7M1_hBVgDKA8PIF4Z42wjR1LGYpxgjCDAQy1JE1/pub?gid=1308909698&output=csv";
-const proxyBase = "https://script.google.com/macros/s/AKfycbwM8cy9LOU0qvvKXvHzJPt99nn9__cuZ_TSmFQ6uW0Z2y7eG0pwjBClHWJ6jKRZaxVN/exec";
-let allCards = [];
+  const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4PyEg3JWk2spDwAJhcD6e5qPxWf9HV4Vb9-sZs7M1_hBVgDKA8PIF4Z42wjR1LGYpxgjCDAQy1JE1/pub?gid=1308909698&output=csv";
+  const proxyBase = "https://script.google.com/macros/s/AKfycbwM8cy9LOU0qvvKXvHzJPt99nn9__cuZ_TSmFQ6uW0Z2y7eG0pwjBClHWJ6jKRZaxVN/exec";
+  let allCards = [];
 
-function extractDriveId(url) {
-  if (!url) return null;
-  const patterns = [
-    /\/d\/([a-zA-Z0-9_-]{25,})/,
-    /id=([a-zA-Z0-9_-]{25,})/,
-    /\/file\/d\/([a-zA-Z0-9_-]{25,})/,
-    /folders\/([a-zA-Z0-9_-]{25,})/
-  ];
-  for (let p of patterns) {
-    const match = url.match(p);
-    if (match) return match[1];
+  // 🔹 Improved Google Drive ID extractor
+  function extractDriveId(url) {
+    if (!url) return null;
+    url = url.trim();
+    const idMatch = url.match(/[-\w]{25,}/);
+    if (idMatch) return idMatch[0];
+    const params = new URLSearchParams(url.split('?')[1]);
+    if (params.has('id')) return params.get('id');
+    return null;
   }
-  return null;
-}
 
-function loadInventory() {
-  Papa.parse(csvUrl, {
-    download: true,
-    header: true,
-    complete: function(results) {
-      const data = results.data;
-      const grid = document.getElementById("grid");
-      grid.innerHTML = "";
-      allCards = [];
+  fetch(csvUrl)
+    .then(r => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    })
+    .then(csv => {
+      const rows = csv.trim().split(/\r?\n/).map(r => r.split(","));
+      let out = "";
 
-      data.forEach(row => {
-        const id = row["ID"]?.trim();
-        const material = row["Material"]?.trim();
-        const color = row["Color"]?.trim();
-        const length = row["Lenght"]?.trim();
-        const width = row["Width"]?.trim();
-        const imageUrl = row["Google link"]?.trim();
-        const status = (row["Status"] || "").toLowerCase();
+      const headers = rows[0].map(h => h.trim().toLowerCase());
+      const idCol = headers.indexOf("id");
+      const materialCol = headers.indexOf("material");
+      const colorCol = headers.indexOf("color");
+      const lengthCol = headers.indexOf("lenght") > -1 ? headers.indexOf("lenght") : headers.indexOf("length");
+      const widthCol = headers.indexOf("width");
+      const linkCol = headers.findIndex(h => h.includes("google"));
+      const statusCol = headers.indexOf("status");
 
-        if (!id || (status && status !== "available")) return;
+      rows.slice(1).forEach(row => {
+        const status = (row[statusCol] || "").toLowerCase();
+        if (status !== "available") return;
 
-        const fileId = extractDriveId(imageUrl);
+        const id = row[idCol] || "";
+        const material = row[materialCol] || "";
+        const color = row[colorCol] || "";
+        const length = row[lengthCol] || "";
+        const width = row[widthCol] || "";
+        const rawUrl = row[linkCol] || "";
+
+        const fileId = extractDriveId(rawUrl);
         const photoUrl = fileId
           ? `${proxyBase}?id=${fileId}`
           : "https://placehold.co/300x180?text=No+Photo";
 
-        const html = `
+        const reserveLink = `<a href="mailto:sales@primecountertops.net?subject=Reserve%20${id}&body=Hi,%0A%0AI%27m%20interested%20in%20this%20remnant:%0A%0AID:%20${id}%0AColor:%20${color}%0AMaterial:%20${material}%0ASize:%20${length}%22%20×%20${width}%22%0A%0AThank%20you!">Reserve Now</a>`;
+
+        const cardHtml = `
           <div class="card" onclick="openLightbox('${photoUrl}')">
-            <img src="${photoUrl}" alt="${color}" onerror="this.src='https://placehold.co/300x180?text=No+Photo'">
+            <img src="${photoUrl}" alt="${color}" onerror="this.src='https://placehold.co/300x180?text=No+Photo'; this.onerror=null;">
             <div class="info">
-              <b>${color || "Unknown"}</b>
-              <div><strong>ID:</strong> ${id || "-"}<br>
-              <strong>Material:</strong> ${material || "-"}<br>
-              <strong>Size:</strong> ${length || "-"} × ${width || "-"}</div>
+              <b>${color}</b>
+              <div class="desc">
+                <strong>ID:</strong> ${id}<br>
+                <strong>Material:</strong> ${material}<br>
+                <strong>Size:</strong> ${length}" × ${width}"
+              </div>
             </div>
-            <a href="mailto:sales@primecountertops.net?subject=Reserve%20${id}&body=Hi,%0A%0AI’m interested in this remnant:%0AID:%20${id}%0AColor:%20${color}%0ASize:%20${length}%20×%20${width}%0A%0APlease provide more info.">Reserve Now</a>
-          </div>
-        `;
-        grid.insertAdjacentHTML("beforeend", html);
-        allCards.push({ html, search: `${id} ${material} ${color}`.toLowerCase() });
+            ${reserveLink}
+          </div>`;
+
+        out += cardHtml;
+        allCards.push({ html: cardHtml, search: `${id} ${material} ${color} ${length} ${width}`.toLowerCase() });
       });
 
-      if (grid.innerHTML.trim() === "") {
-        grid.innerHTML = '<p class="empty">No remnants available.</p>';
-      }
-    },
-    error: function(err) {
-      console.error("CSV Load Error:", err);
-      document.getElementById("grid").innerHTML = '<p class="empty" style="color:red;">Error loading inventory.</p>';
-    }
+      document.getElementById("grid").innerHTML = out || '<p class="empty">No remnants available at this time.</p>';
+    })
+    .catch(err => {
+      console.error("Fetch error:", err);
+      document.getElementById("grid").innerHTML = '<p class="empty" style="color:red;">Error loading inventory. Please refresh.</p>';
+    });
+
+  function filterCards() {
+    const query = document.getElementById("search").value.toLowerCase();
+    const grid = document.getElementById("grid");
+    let filtered = "";
+
+    allCards.forEach(card => {
+      if (card.search.includes(query)) filtered += card.html;
+    });
+
+    grid.innerHTML = filtered || '<p class="empty">No results found.</p>';
+  }
+
+  function openLightbox(url) {
+    const lightbox = document.getElementById("lightbox");
+    const img = document.getElementById("lightbox-img");
+    img.src = url;
+    lightbox.classList.add("active");
+  }
+
+  document.getElementById("lightbox").addEventListener("click", () => {
+    document.getElementById("lightbox").classList.remove("active");
   });
-}
 
-function filterCards() {
-  const query = document.getElementById("search").value.toLowerCase();
-  const grid = document.getElementById("grid");
-  if (!query) return loadInventory();
-
-  let filtered = "";
-  allCards.forEach(c => { if (c.search.includes(query)) filtered += c.html; });
-  grid.innerHTML = filtered || '<p class="empty">No results found.</p>';
-}
-
-function openLightbox(url) {
-  document.getElementById("lightbox-img").src = url;
-  document.getElementById("lightbox").classList.add("active");
-}
-
-function closeLightbox() {
-  document.getElementById("lightbox").classList.remove("active");
-}
-
-document.addEventListener("DOMContentLoaded", loadInventory);
+  // Auto-refresh every 3 minutes
+  setInterval(() => location.reload(), 180000);
 </script>
 
 </body>
