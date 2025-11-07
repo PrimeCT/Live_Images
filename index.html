@@ -50,12 +50,6 @@
 const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4PyEg3JWk2spDwAJhcD6e5qPxWf9HV4Vb9-sZs7M1_hBVgDKA8PIF4Z42wjR1LGYpxgjCDAQy1JE1/pub?gid=1308909698&output=csv";
 let allCards = [];
 
-function extractDriveId(url) {
-  if (!url) return null;
-  const match = url.match(/[-\w]{25,}/);
-  return match ? match[0] : null;
-}
-
 fetch(csvUrl)
   .then(r => r.text())
   .then(csv => {
@@ -69,14 +63,12 @@ fetch(csvUrl)
       const length = row[4].trim();
       const width = row[5].trim();
       const area = row[6].trim();
-      const rawUrl = row[7].trim();
       const status = row[8].trim().toLowerCase();
       if (status !== "available") return;
 
-      const fileId = extractDriveId(rawUrl);
-      const photoUrl = fileId
-        ? `https://drive.google.com/uc?export=view&id=${fileId}`
-        : 'https://placehold.co/300x180?text=No+Photo';
+      // Build local image path (replace spaces with underscores)
+      const safeColor = color.replace(/\s+/g, "_");
+      const photoUrl = `remnants-images/${safeColor}/${id}.jpg`;
 
       const card = `
         <div class="card">
@@ -91,6 +83,7 @@ fetch(csvUrl)
           <a href="mailto:sales@primecountertops.net?subject=Reserve%20${id}&body=Hi,%0A%0AI%27m%20interested%20in%20this%20remnant:%0A%0AID:%20${id}%0AMaterial:%20${material}%0AColor:%20${color}%0ASize:%20${length}%22%20x%20${width}%22%0A%0AThank%20you!">Reserve Now</a>
         </div>
       `;
+
       out += card;
       allCards.push({html:card, search:`${id} ${material} ${color} ${length} ${width} ${area}`.toLowerCase()});
     });
